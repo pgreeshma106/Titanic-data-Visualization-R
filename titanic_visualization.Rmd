@@ -1,0 +1,97 @@
+---
+title: "R Notebook"
+output:
+  word_document: default
+  html_notebook: default
+---
+Load required libraries
+```{r}
+library(ggplot2)
+library(forcats)
+library(dplyr)
+```
+load data
+```{r}
+titanic <- read.csv("titanic.csv",header=TRUE)
+```
+
+```{r}
+# Create an ClassCategory based on PClass
+titanic <- titanic %>%
+  mutate(ClassCategory = case_when(
+    PClass == "3rd" ~ "Good",    
+    PClass == "2nd" ~ "Very Good",    
+    PClass == "1st" ~ "Excellent",   
+    .default = "other"           
+  ))
+
+head(titanic)
+```
+
+This shows the class category of titanic. If Passenger class is 1st, it is Excellent and then followed by 2nd class(Very good) then next 3rd class(good).
+
+```{r}
+# Extract gender 
+titanic <- titanic %>%
+  mutate(Gender = case_when(grepl("Miss|Mrs", Name) ~ "Female",grepl("Mr", Name) ~ "Male", .default = "other"
+  ))
+
+# View the updated dataset
+head(titanic)
+#This output will shows the dataset containing along with gender column.
+```
+
+
+Using ggplot2 and forcats, creating appropriate plots
+Lets find is there a relationship between survival and gender?
+```{r}
+ggplot(titanic, aes(x = Gender, fill = factor(Survived))) +
+  geom_bar(position = "fill") +
+  labs(title = "Survival by Gender", x = "Gender", y = "Survived") +
+  scale_fill_brewer(labels = c("NO", "Yes"))
+
+```
+
+This plot reveals that females had a significantly higher survival rate compared to males. While the majority of males did not survive (Like "No" category), most females survived. 
+
+
+Finding is there a relationship between survival and class?
+```{r}
+titanic_clean <- titanic %>%
+  filter(PClass %in% c("1st", "2nd", "3rd")) %>%  
+  mutate(PClass = factor(PClass, levels = c("1st", "2nd", "3rd")))  # reset factor levels
+
+ggplot(titanic_clean, aes(x = PClass, fill = factor(Survived))) +
+  geom_bar(position = "fill") +
+  labs(title = "Survival Rate by Class", x = "Passenger Class", y = "Proportion") +
+  scale_fill_manual(values = c("red", "green"), name = "Survival", labels = c("No", "Yes"))
+```
+
+
+The plot shows a clear relationship between passenger class and survival. First-class passengers had the highest survival rate, followed by second-class passengers, followed by Third-class passengers. 
+
+
+
+Lets see the relationship between survival and marital status for females and also for males.
+```{r}
+# Extract marital status from Name
+titanic <- titanic %>%
+  mutate(MaritalStatus = case_when(grepl("Mrs", Name) ~ "Married",grepl("Miss", Name) ~ "Unmarried"))%>%
+   filter(!is.na(MaritalStatus))
+
+# Plot survival by marital status and gender
+ggplot(titanic, aes(x = MaritalStatus, fill = factor(Survived))) +
+ geom_bar(position = "fill") +
+ facet_wrap(~Gender) +
+ labs(title = "Survival Rate by Marital Status and Gender", x = "Marital Status", y = "Proportion Survived") +
+scale_fill_manual(values = c("red", "blue"), name = "Survived", labels = c("No", "Yes"))
+```
+
+Females: Married women (identified by "Mrs") had a slightly higher survival rate compared to unmarried women ("Miss"). This may suggest that married women received assistance from spouses or were prioritized during rescue efforts.
+Males: We cannot say male survival rate by marital status because male cannot be justified by Mr status. We can say for women but not for men as he married or unmarried based on Mr. 
+
+
+
+
+
+
